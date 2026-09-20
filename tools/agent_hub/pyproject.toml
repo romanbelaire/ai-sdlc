@@ -1,0 +1,11 @@
+[project]
+name = "agent-hub"
+version = "0.1.0"
+description = "Local advisory leases and durable agent messages"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+dependencies = ["mcp>=1.20,<2"]
+
+[tool.uv]
+package = false

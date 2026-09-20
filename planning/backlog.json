@@ -1,0 +1,491 @@
+{
+  "milestone": "Harness kernel: sessions, claims, review-gated approval",
+  "sprints": [
+    {
+      "id": "INFRA",
+      "goal": "Local hub coordination, feature intake, and operator UI"
+    }
+  ],
+  "tickets": [
+    {
+      "id": "RL-011",
+      "title": "Local team dashboard for backlog cards and hub chat",
+      "sprint": "INFRA",
+      "status": "done",
+      "depends_on": [],
+      "paths": [
+        "tools/agent_hub/",
+        "docs/development.md",
+        "AGENTS.md",
+        "HANDBOOK.md"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "Stdlib HTTP dashboard on 127.0.0.1 with a per-launch token and Host check; no public bind.",
+        "Kanban of backlog tickets plus a Requested column; card detail shows acceptance, handoff, and related messages.",
+        "Sessions panel and chat: Roman can send as sender roman to one session or all, plus a team feed.",
+        "Hub feature_requests support submit/list/link; backlog remains single-writer (integrator links requests to RL IDs).",
+        "Telegram and hosted auth stay out of scope.",
+        "No product or contract changes."
+      ],
+      "validation": [
+        "Hub unit tests plus check_repo; document how to launch the dashboard and obtain the token."
+      ],
+      "skeptic": "clear"
+    },
+    {
+      "id": "RL-012",
+      "title": "Minimal-token agent onboarding via hub help",
+      "sprint": "INFRA",
+      "status": "done",
+      "depends_on": [],
+      "paths": [
+        "tools/agent_hub/",
+        "AGENTS.md",
+        "planning/features/RL-012-agent-onboarding.md"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "hub.py help with no keyword lists topics sessions, claims, inbox, mcp, startup, and watch, plus any overlay topics.",
+        "help <keyword> prints a short stable parseable command list (exact CLI, --holder where required, absolute RL_AGENT_HUB_DB, paths). Not essays. Empty or huge output fails.",
+        "Unknown keyword raises.",
+        "help startup covers a fresh checkout spin-up and explicit non-starts (no product services or dashboard unless asked; no GPU; processes terminate).",
+        "AGENTS.md stays short and contains a load-bearing help stanza that must not be dropped from a summary.",
+        "No product, contract, Cursor-only skill, Telegram, or auto-started daemons."
+      ],
+      "validation": [
+        "Hub unit tests for every listed topic, unknown-keyword error, and startup text on a temp empty DB; python tools/check_repo.py; AGENTS.md remains short."
+      ],
+      "skeptic": "clear"
+    },
+    {
+      "id": "RL-013",
+      "title": "Watch idle-exit so a dead session becomes takeable",
+      "sprint": "INFRA",
+      "status": "done",
+      "depends_on": [
+        "RL-015"
+      ],
+      "paths": [
+        "tools/agent_hub/",
+        "docs/development.md",
+        "planning/features/RL-013-session-watchdog.md"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "hub.py watch stops renewing and exits with the stop sentinel and reason idle when the session has had no holder-attributed write for an idle window (default 10 minutes, --idle-exit to change).",
+        "Holder-attributed writes: locker-save, send, ticket claim/release, and inbox cursor advance. Renewing the session lease itself never counts.",
+        "A session whose agent keeps writing is never exited. A superseded holder still exits as today.",
+        "The dead session then reaches its normal lease expiry and any agent can take it with session-start. No sweeper, death notices, busy flag, new tables, or schema change.",
+        "docs/development.md: a watcher does not keep a dead session alive; worst case for takeover is the idle window plus the remaining lease."
+      ],
+      "validation": [
+        "Hub unit tests with patched time: idle watcher exits, active session keeps running, superseded holder exits; python tools/check_repo.py."
+      ],
+      "skeptic": "kept"
+    },
+    {
+      "id": "RL-014",
+      "title": "Shared inbox watch CLI",
+      "sprint": "INFRA",
+      "status": "done",
+      "depends_on": [],
+      "paths": [
+        "tools/agent_hub/",
+        "planning/features/RL-014-inbox-watch.md"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "hub.py watch --session --holder polls that inbox, renews the session lease only, and prints one AGENT_LOOP_WAKE_hub-inbox sentinel per new message id.",
+        "Exits nonzero if the holder is superseded; silent session-start is not RL-013 liveness.",
+        "AGENTS.md or help sessions/watch tells agents to run this command in their IDE wake hook and not invent a second loop.",
+        "No master-app supervisor, no auto-started product services, no product changes."
+      ],
+      "validation": [
+        "Hub unit tests with a temp DB for new mail, idle poll, and superseded holder; python tools/check_repo.py."
+      ],
+      "skeptic": "clear"
+    },
+    {
+      "id": "RL-015",
+      "title": "Hub kernel config and message kinds",
+      "sprint": "INFRA",
+      "status": "done",
+      "depends_on": [],
+      "paths": [
+        "tools/agent_hub/",
+        "tools/check_repo.py",
+        "planning/features/RL-015-hub-kernel-config.md"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "Config names backlog path, session-id pattern, reserved resources, and check_repo required docs.",
+        "send stores kind fyi|review|wake|death; default fyi. Operator roman can send without a session holder.",
+        "This repo's committed config still requires the existing spec files. A temp config without game specs must not require them.",
+        "No package publish, Telegram, hosted HTTP, or product content changes."
+      ],
+      "validation": [
+        "Hub unit tests for kinds, operator send, and invalid config; python tools/check_repo.py."
+      ],
+      "skeptic": "clear"
+    },
+    {
+      "id": "RL-016",
+      "title": "Split AGENTS.md kernel from product overlay",
+      "sprint": "INFRA",
+      "status": "done",
+      "depends_on": [],
+      "paths": [
+        "AGENTS.md",
+        "CLAUDE.md",
+        "planning/features/RL-016-agent-contract-overlay.md"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "AGENTS.md keeps help stanza and session/work protocol only; no product versions, vendor assets, or product constants.",
+        "Product invariants remain in CLAUDE.md or docs/product-contract.md.",
+        "Help topics split kernel vs overlay; land after or with RL-012 so hub.py help exists.",
+        "AGENTS.md stays under 4000 characters."
+      ],
+      "validation": [
+        "python tools/check_repo.py; AGENTS.md must not contain product names or constants; help tests if RL-012 has landed."
+      ],
+      "skeptic": "clear"
+    },
+    {
+      "id": "RL-017",
+      "title": "Dashboard merge queue after independent review",
+      "sprint": "INFRA",
+      "status": "done",
+      "depends_on": [
+        "RL-011",
+        "RL-015"
+      ],
+      "paths": [
+        "tools/agent_hub/",
+        "docs/development.md",
+        "planning/features/RL-017-dashboard-merge-queue.md"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "Merge tab lists a ticket only after an independent review with no blocking findings and an unchanged reviewed branch head.",
+        "Row shows remaining non-blocking comments; Approve binds ticket+branch+full SHA and authorizes the integrator only (never auto-merge).",
+        "Send with comments records/sends feedback and returns the item to changes requested; a hub message is not an approval.",
+        "Roman yes in a direct agent chat remains valid and is recordable as source=chat for the same exact SHA.",
+        "No product or contract changes."
+      ],
+      "validation": [
+        "Hub/dashboard unit tests for queue membership, moved head, approve vs comments, and chat-sourced approval; python tools/check_repo.py."
+      ],
+      "skeptic": "clear"
+    },
+    {
+      "id": "RL-018",
+      "title": "Skeptic role, charter, and debate marks",
+      "sprint": "INFRA",
+      "status": "done",
+      "depends_on": [],
+      "skeptic": "clear",
+      "paths": [
+        "docs/skeptic-charter.md",
+        "docs/development.md",
+        "AGENTS.md",
+        "planning/feature-template.md",
+        "planning/features/RL-018-skeptic-role.md",
+        "tools/check_repo.py",
+        "tools/agent_hub/help_topics.py"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "Read-only charter states the repository's purpose.",
+        "Tickets carry skeptic clear|watch|flagged|debate|kept|scrubbed.",
+        "flagged or debate cannot stay ready, in_progress, review, or done.",
+        "help skeptic explains pickup, flag, and three-vote debate.",
+        "No product or contract changes."
+      ],
+      "validation": [
+        "python tools/check_repo.py; hub help lists overlay skeptic."
+      ]
+    },
+    {
+      "id": "RL-028",
+      "title": "Name holder persist mode on the hub API",
+      "sprint": "INFRA",
+      "status": "done",
+      "depends_on": [
+        "RL-013"
+      ],
+      "paths": [
+        "tools/agent_hub/",
+        "AGENTS.md",
+        "docs/development.md",
+        "HANDBOOK.md",
+        "planning/features/RL-028-holder-persist.md"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "sessions() persist is oneshot or watch; absent locker persist line means oneshot.",
+        "locker-save rejects any persist value other than oneshot or watch (fail fast).",
+        "help sessions and help watch name the two modes and forbid a second poller or session-start heartbeat.",
+        "No new loop, daemon, sweeper, busy flag, table, or schema. Product listeners stay docs-only adapters on existing watch sentinels."
+      ],
+      "validation": [
+        "python -m unittest discover -s tools/agent_hub/tests -v; python tools/check_repo.py. No GPU."
+      ],
+      "skeptic": "watch"
+    },
+    {
+      "id": "RL-043",
+      "title": "Approve pending feature requests from the Merge tab",
+      "sprint": "INFRA",
+      "status": "ready",
+      "depends_on": [
+        "RL-017"
+      ],
+      "paths": [
+        "tools/agent_hub/",
+        "docs/development.md",
+        "planning/features/RL-043-fr-merge-approval.md"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "Merge tab lists status=new feature requests that still need Roman's yes, each with an Approve button.",
+        "Approve is a signed operator action (same key as merge approvals); a hub message is not FR approval; it does not auto-file a ticket or merge code.",
+        "Existing review-merge Approve path is unchanged. No product or contract changes."
+      ],
+      "validation": [
+        "Hub/dashboard unit tests: new FRs appear, Approve records operator yes, a chat message does not; python tools/check_repo.py. No GPU."
+      ],
+      "skeptic": "watch"
+    },
+    {
+      "id": "RL-044",
+      "title": "Announce a free integrator seat; drop ended sessions",
+      "sprint": "INFRA",
+      "status": "done",
+      "depends_on": [
+        "RL-013",
+        "RL-028"
+      ],
+      "paths": [
+        "tools/agent_hub/",
+        "docs/development.md",
+        "planning/features/RL-044-integrator-vacancy.md"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "If agent-session-1 has been free for more than 300 seconds, send one team-wide message that the integrator seat is available and should be picked up. Do not spam; one notice per vacancy.",
+        "A graceful session-end removes that session from sessions() so closed seats do not accumulate.",
+        "sessions() reports active_at and idle_seconds from holder-attributed writes only (never session-lease renewal), plus the non-session leases that session holds. Dashboard shows those facts and does not infer blocked vs dead.",
+        "No new sweeper daemon, busy flag, or always-on process: reuse dashboard poll or existing watch/idle-exit signals. RL-013 forbids a hub sweeper. No product or contract changes."
+      ],
+      "validation": [
+        "Hub/dashboard unit tests with patched time: vacancy notice once after 300s free; session-end drops the session; idle_seconds ignores lease renew; python tools/check_repo.py. No GPU."
+      ],
+      "skeptic": "watch"
+    },
+    {
+      "id": "RL-045",
+      "title": "Priority scheduling so agents do not idle-block each other",
+      "sprint": "INFRA",
+      "status": "done",
+      "depends_on": [],
+      "paths": [
+        "planning/features/RL-045-priority-scheduling.md",
+        "docs/development.md"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "Debate keep/scrub a written scheduling rule that reduces idle time without greedy blocking (wrong-priority claims, contracts pile-up).",
+        "If kept: the rule is one short policy in docs/development.md plus backlog fields if needed. No scheduler daemon, sweeper, or auto-assign bot.",
+        "No product or contract changes. Do not implement during debate."
+      ],
+      "validation": [
+        "Debate keep/scrub; if kept, python tools/check_repo.py. No GPU."
+      ],
+      "skeptic": "kept"
+    },
+    {
+      "id": "RL-046",
+      "title": "Owner-scoped experiments log in the hub",
+      "sprint": "INFRA",
+      "status": "ready",
+      "depends_on": [
+        "RL-028"
+      ],
+      "paths": [
+        "tools/agent_hub/",
+        "docs/development.md",
+        "planning/features/RL-046-experiments-log.md"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "Hub table experiments with natural run_id; read is open; write only the live owner-session holder; final rows are immutable.",
+        "CLI start/record/final/list/get; operator reassign. No sweep scheduler, no checkpoint bytes in SQLite, no daemon.",
+        "FR-4 file manifests are not built. No product or contract changes."
+      ],
+      "validation": [
+        "Hub unit tests: owner write, non-owner refused, superseded holder refused, final immutable, natural-key idempotent; python tools/check_repo.py. No GPU."
+      ],
+      "skeptic": "watch"
+    },
+    {
+      "id": "RL-047",
+      "title": "Publish the team harness as a separate git repo",
+      "sprint": "INFRA",
+      "status": "done",
+      "depends_on": [
+        "RL-028"
+      ],
+      "paths": [
+        "tools/agent_hub/",
+        "tools/publish_harness.py",
+        "docs/development.md",
+        "planning/features/RL-047-harness-publish.md",
+        "planning/handoffs/RL-047.md"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "Debate keep/scrub extracting tools/agent_hub, tests, demonstrations, and docs into a push-ready repo that excludes the product.",
+        "If kept: two inspector agents review that extract only after this card is ready. The origin repository keeps the product and its contracts.",
+        "No push during debate. No GPU. No operator.key. No sweeper."
+      ],
+      "validation": [
+        "Debate keep/scrub recorded. If kept later: hub tests plus python tools/check_repo.py and a tree without any product files. No GPU."
+      ],
+      "skeptic": "kept"
+    },
+    {
+      "id": "RL-048",
+      "title": "Secret keys stay off the wire and out of agents",
+      "sprint": "INFRA",
+      "status": "backlog",
+      "depends_on": [
+        "RL-028"
+      ],
+      "paths": [
+        "tools/agent_hub/",
+        "docs/development.md",
+        "planning/features/RL-048-secret-keys.md"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "A local wrap/use protocol lets a program call AI HTTP APIs with a user-owned key that never appears in hub messages, lockers, git, SQLite, or agent context.",
+        "Agents and external infra see a handle at most, never secret bytes. operator.key and merge approvals are unchanged.",
+        "No product or contract changes. No sweeper. Do not implement until ready."
+      ],
+      "validation": [
+        "Hub tests: holder cannot read another user's key bytes; CLI/logs refuse secrets; python tools/check_repo.py. No GPU."
+      ],
+      "skeptic": "watch"
+    },
+    {
+      "id": "RL-049",
+      "title": "Done column shows newest ten with show-more",
+      "sprint": "INFRA",
+      "status": "backlog",
+      "depends_on": [
+        "RL-011"
+      ],
+      "paths": [
+        "tools/agent_hub/",
+        "planning/features/RL-049-done-column.md"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "Dashboard Done column is ordered by most recently completed.",
+        "Show the top 10 by default with a show 10 more control at the bottom.",
+        "No product or contract changes. No hub schema change."
+      ],
+      "validation": [
+        "Dashboard unit test: recency order, first page 10, more appends 10; python tools/check_repo.py. No GPU."
+      ],
+      "skeptic": "watch"
+    },
+    {
+      "id": "RL-050",
+      "title": "Integrator force-end with a signed operator pointer",
+      "sprint": "INFRA",
+      "status": "ready",
+      "depends_on": [
+        "RL-044"
+      ],
+      "paths": [
+        "tools/agent_hub/",
+        "docs/development.md",
+        "planning/features/RL-050-operator-force-end.md",
+        "planning/handoffs/RL-050.md"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "Live integrator holder can force-end a named occupied session only when the call points at a signed operator instruction (same key family as merge approvals).",
+        "A hub message, including sender roman, is not the instruction. Other agents can verify the signature and refuse a forgery.",
+        "No product or contract changes. No sweeper. Not the integrator's implementation seat."
+      ],
+      "validation": [
+        "Hub tests: unsigned or forged instruction refused; signed operator pointer accepted only from the live integrator holder; python tools/check_repo.py. No GPU."
+      ],
+      "skeptic": "watch"
+    },
+    {
+      "id": "RL-051",
+      "title": "Retire free leftover seats after idle-exit",
+      "sprint": "INFRA",
+      "status": "ready",
+      "depends_on": [
+        "RL-044"
+      ],
+      "paths": [
+        "tools/agent_hub/",
+        "docs/development.md",
+        "planning/features/RL-051-idle-exit-leftover.md",
+        "planning/handoffs/RL-051.md"
+      ],
+      "resources": [
+        "agent-infra"
+      ],
+      "acceptance": [
+        "A session that is already free after idle-exit plus lease expiry does not sit in sessions() forever with leftover persist:watch and growing idle_seconds.",
+        "Occupied leases stay the RL-050 path. No sweeper, no idle-exit default change, no product or contract changes. Do not implement from the integrator seat."
+      ],
+      "validation": [
+        "Hub/dashboard tests with patched time: free leftover is retired or not shown as occupied; occupied lease unchanged; python tools/check_repo.py. No GPU."
+      ],
+      "skeptic": "watch"
+    }
+  ]
+}

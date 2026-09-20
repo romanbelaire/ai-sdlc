@@ -1,0 +1,17 @@
+{
+  "backlog": "planning/backlog.json",
+  "session_pattern": "agent-session-*",
+  "operator": "roman",
+  "integrator": "agent-session-1",
+  "reserved_resources": [
+    "shared-editor",
+    "contracts",
+    "agent-infra"
+  ],
+  "required_docs": [
+    "AGENTS.md",
+    "HANDBOOK.md",
+    "docs/development.md",
+    "docs/skeptic-charter.md"
+  ]
+}

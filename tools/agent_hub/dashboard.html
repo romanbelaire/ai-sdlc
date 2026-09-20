@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Hub Team</title>
+<style>
+:root {
+  --bg: #f4f5f7; --panel: #ffffff; --ink: #1c1f24; --muted: #6a7280; --line: #e2e5ea;
+  --accent: #2f6fde; --accent-ink: #ffffff; --card: #ffffff; --chip: #eef1f5;
+  --new: #b35c00; --ready: #1f7a4d; --progress: #2f6fde; --review: #7a3fc4; --blocked: #c0392b; --done: #6a7280;
+  --mine: #e9f0fd; --shadow: 0 1px 2px rgba(0,0,0,.06), 0 1px 1px rgba(0,0,0,.04);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111317; --panel: #181b21; --ink: #e6e8ec; --muted: #9aa3af; --line: #2a2f38;
+    --accent: #5b8def; --card: #1f232a; --chip: #262b33; --mine: #1b2740;
+    --shadow: 0 1px 2px rgba(0,0,0,.4);
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); }
+header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
+header h1 { font-size: 16px; margin: 0; }
+header .head { color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+header .nav.on { background: var(--chip); border-color: var(--accent); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--done); display: inline-block; }
+.dot.live { background: var(--ready); }
+button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 6px; padding: 6px 12px; cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+main { display: grid; grid-template-columns: 250px 1fr 380px; height: calc(100vh - 49px); }
+aside, section { overflow: auto; }
+#sessions { border-right: 1px solid var(--line); padding: 12px; background: var(--panel); }
+#chat { border-left: 1px solid var(--line); background: var(--panel); display: flex; flex-direction: column; overflow: hidden; }
+h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 4px 0 8px; }
+.session { padding: 8px; border-radius: 6px; cursor: pointer; margin-bottom: 6px; border: 1px solid var(--line); }
+.session:hover, .session.sel { border-color: var(--accent); }
+.session .name { font-weight: 600; display: flex; justify-content: space-between; }
+.session .meta { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.badge { background: var(--accent); color: var(--accent-ink); border-radius: 10px; padding: 0 7px; font-size: 11px; }
+#board { display: flex; gap: 12px; padding: 12px; overflow-x: auto; align-items: flex-start; }
+.column { min-width: 230px; width: 230px; flex: 0 0 auto; }
+.column h2 { display: flex; justify-content: space-between; }
+.card { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--done); border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; cursor: pointer; box-shadow: var(--shadow); }
+.card:hover { border-color: var(--accent); }
+.card .id { font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; gap: 6px; }
+.card .title { font-weight: 600; margin: 2px 0 4px; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { background: var(--chip); border-radius: 4px; padding: 1px 6px; font-size: 11px; color: var(--muted); }
+.chip.ok { color: var(--ready); font-weight: 600; } .chip.warn { color: var(--blocked); font-weight: 600; }
+.approval { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 12px 0; }
+.approval select, .approval input { width: 100%; margin-bottom: 6px; }
+.arow { display: flex; gap: 8px; align-items: center; font-size: 12px; margin-bottom: 6px; }
+.arow > span:first-child { flex: 1; overflow-wrap: anywhere; }
+.merge-list { width: min(900px, 100%); margin: 0 auto; }
+.merge-card { cursor: default; padding: 14px; margin-bottom: 12px; }
+.merge-card h3 { margin: 4px 0; }
+.merge-card textarea { min-height: 76px; margin-top: 8px; }
+.merge-card ul { margin: 6px 0; padding-left: 20px; }
+.s-new { border-left-color: var(--new); } .s-ready { border-left-color: var(--ready); }
+.s-in_progress { border-left-color: var(--progress); } .s-review { border-left-color: var(--review); }
+.s-blocked { border-left-color: var(--blocked); } .s-done { border-left-color: var(--done); opacity: .75; }
+#chat .top { padding: 10px 12px; border-bottom: 1px solid var(--line); display: flex; gap: 8px; align-items: center; }
+select { font: inherit; padding: 5px; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; }
+#chat select { flex: 1; }
+.tabs { display: flex; gap: 4px; padding: 6px 12px 0; }
+.tabs button { border-radius: 6px 6px 0 0; border-bottom: none; padding: 4px 10px; }
+.tabs button.on { background: var(--chip); }
+#messages { flex: 1; overflow: auto; padding: 10px 12px; background: var(--chip); }
+.msg { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; margin-bottom: 8px; }
+.msg.mine { background: var(--mine); }
+.msg .from { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+.msg .body { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 2px; }
+.composer { border-top: 1px solid var(--line); padding: 8px; display: flex; gap: 8px; }
+textarea, input[type=text] { font: inherit; width: 100%; padding: 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); color: var(--ink); resize: vertical; }
+.composer textarea { height: 64px; }
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.35); display: none; }
+.overlay.open { display: block; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 100vw); background: var(--panel); border-left: 1px solid var(--line); overflow: auto; padding: 16px 18px; }
+.modal { position: fixed; top: 10vh; left: 50%; transform: translateX(-50%); width: min(560px, 94vw); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+.drawer h3, .modal h3 { margin: 0 0 6px; font-size: 18px; }
+.drawer ul { padding-left: 18px; }
+pre.handoff { white-space: pre-wrap; background: var(--chip); padding: 10px; border-radius: 6px; font-size: 12px; }
+.row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px; }
+.muted { color: var(--muted); }
+#toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 6px; display: none; }
+@media (max-width: 1100px) { main { grid-template-columns: 1fr; height: auto; } #chat { height: 70vh; } #sessions, #chat { border: none; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="dot" id="live" title="Hub connection"></span>
+  <h1>Agent Hub · Team</h1>
+  <span class="head" id="head"></span>
+  <button class="nav on" id="showBoard">Board</button>
+  <button class="nav" id="showMerge">Merge (0)</button>
+  <button class="primary" id="newFeature">New feature</button>
+</header>
+<main>
+  <aside id="sessions"><h2>Sessions</h2><div id="sessionList"></div></aside>
+  <section id="board"></section>
+  <aside id="chat">
+    <div class="top"><label for="to" class="muted">To</label><select id="to"></select></div>
+    <div class="tabs"><button id="tabMine" class="on">With me</button><button id="tabFeed">Team feed</button></div>
+    <div id="messages"></div>
+    <div class="composer">
+      <textarea id="compose" placeholder="Message the team (Ctrl+Enter to send)"></textarea>
+      <button class="primary" id="send">Send</button>
+    </div>
+  </aside>
+</main>
+<div class="overlay" id="drawerOverlay"><div class="drawer" id="drawer"></div></div>
+<div class="overlay" id="modalOverlay">
+  <div class="modal">
+    <h3>New feature request</h3>
+    <p class="muted">Goes to the integrator session, which turns it into an RL ticket.</p>
+    <input type="text" id="featureTitle" maxlength="120" placeholder="Short title">
+    <p></p>
+    <textarea id="featureBody" rows="9" maxlength="6000" placeholder="Problem:&#10;Outcome:&#10;Acceptance:&#10;Notes:"></textarea>
+    <div class="row"><button id="cancelFeature">Cancel</button><button class="primary" id="submitFeature">Submit</button></div>
+  </div>
+</div>
+<div id="toast"></div>
+<script>
+"use strict";
+const COLUMNS = [["requested", "Requested"], ["ready", "Ready"], ["in_progress", "In progress"], ["review", "Review"],
+                 ["blocked", "Blocked"], ["backlog", "Backlog"], ["done", "Done"]];
+let secret = new URLSearchParams(location.search).get("token") || "";
+try {
+  if (secret) sessionStorage.setItem("teamToken", secret); else secret = sessionStorage.getItem("teamToken") || "";
+} catch (e) { /* storage may be unavailable; the URL token still works for this load */ }
+history.replaceState(null, "", "/");  // keep the token out of the address bar
+let state = null, messages = [], lastId = 0, tab = "mine", view = "board", mergeDrafts = {};
+const $ = (id) => document.getElementById(id);
+
+function el(tag, cls, text) {
+  const node = document.createElement(tag);
+  if (cls) node.className = cls;
+  if (text !== undefined && text !== null) node.textContent = String(text);  // never innerHTML: messages are untrusted
+  return node;
+}
+async function api(path, body) {
+  const options = { headers: { "X-Team-Token": secret } };
+  if (body !== undefined) {
+    options.method = "POST";
+    options.headers["Content-Type"] = "application/json";
+    options.body = JSON.stringify(body);
+  }
+  const response = await fetch(path, options);
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || response.statusText);
+  return data;
+}
+function toast(text) {
+  $("toast").textContent = text; $("toast").style.display = "block";
+  setTimeout(() => { $("toast").style.display = "none"; }, 3500);
+}
+function when(seconds) { return new Date(seconds * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); }
+
+function ownerOf(ticketId) {
+  const lease = state.leases.find((l) => l.resource === ticketId);
+  return lease ? lease.owner : null;
+}
+function renderSessions() {
+  const list = $("sessionList"); list.replaceChildren();
+  for (const s of state.sessions) {
+    const box = el("div", "session" + ($("to").value === s.session ? " sel" : ""));
+    const name = el("div", "name", s.session);
+    if (s.unread) name.append(el("span", "badge", s.unread));
+    const facts = [s.free ? "free" : `held by ${s.holder}`];
+    if (s.idle_seconds != null) facts.push(`idle ${Math.floor(s.idle_seconds)}s`);
+    if (s.claims && s.claims.length) facts.push(s.claims.join(", "));
+    box.append(name, el("div", "meta", facts.join(" · ")), el("div", "meta", s.summary));
+    box.onclick = () => { $("to").value = s.session; renderSessions(); $("compose").focus(); };
+    list.append(box);
+  }
+}
+function renderRecipients() {
+  const select = $("to"), current = select.value || state.integrator;
+  select.replaceChildren(el("option", null, "All sessions"));
+  select.firstChild.value = "all";
+  for (const s of state.sessions) { const o = el("option", null, s.session); o.value = s.session; select.append(o); }
+  select.value = [...select.options].some((o) => o.value === current) ? current : "all";
+}
+function renderBoard() {
+  const board = $("board"); board.replaceChildren();
+  const featureFor = {};
+  for (const f of state.features) if (f.ticket) featureFor[f.ticket] = f;
+  for (const [key, label] of COLUMNS) {
+    const column = el("div", "column"), cards = [];
+    if (key === "requested") {
+      for (const f of state.features.filter((f) => f.status === "new")) {
+        const card = el("div", "card s-new");
+        const id = el("div", "id"); id.append(el("span", null, `FR-${f.id}`), el("span", null, f.requester));
+        card.append(id, el("div", "title", f.title), el("div", "chips"));
+        card.onclick = () => openFeature(f);
+        cards.push(card);
+      }
+    } else {
+      for (const t of state.board.tickets.filter((t) => t.status === key)) {
+        const card = el("div", `card s-${t.status}`);
+        const id = el("div", "id"); id.append(el("span", null, t.id), el("span", null, t.sprint));
+        const chips = el("div", "chips");
+        const owner = ownerOf(t.id);
+        if (owner) chips.append(el("span", "chip", owner));
+        if (approvalsFor(t.id).some((a) => approvalLabel(a)[1] === "ok")) chips.append(el("span", "chip ok", "✓ merge approved"));
+        if (featureFor[t.id]) chips.append(el("span", "chip", `FR-${featureFor[t.id].id}`));
+        if (t.depends_on.length) chips.append(el("span", "chip", `needs ${t.depends_on.join(", ")}`));
+        card.append(id, el("div", "title", t.title), chips);
+        card.onclick = () => openTicket(t);
+        cards.push(card);
+      }
+    }
+    const heading = el("h2"); heading.append(el("span", null, label), el("span", null, cards.length));
+    column.append(heading, ...cards);
+    board.append(column);
+  }
+}
+function approvalForReview(reviewId) {
+  return state.approvals.find((a) => a.review_id === reviewId && approvalLabel(a)[1] === "ok");
+}
+function captureMergeDrafts() {
+  for (const input of document.querySelectorAll("[data-review-draft]")) {
+    mergeDrafts[input.dataset.reviewDraft] = input.value;
+  }
+}
+function renderMergeQueue() {
+  const board = $("board"), list = el("div", "merge-list");
+  const focused = document.activeElement && document.activeElement.dataset.reviewDraft;
+  const selection = focused ? [document.activeElement.selectionStart, document.activeElement.selectionEnd] : null;
+  captureMergeDrafts();
+  board.replaceChildren(list);
+  const title = el("h2", null, `Ready for merge approval · ${state.merge_queue.length}`);
+  list.append(title);
+  if (!state.merge_queue.length) {
+    list.append(el("p", "muted", "Nothing is ready. A different session must review the exact branch head with no blocking findings."));
+    return;
+  }
+  const tickets = Object.fromEntries(state.board.tickets.map((t) => [t.id, t]));
+  for (const review of state.merge_queue) {
+    const ticket = tickets[review.ticket], card = el("div", "card merge-card s-review");
+    const id = el("div", "id");
+    id.append(el("span", null, `${review.ticket} · R-${review.id}`),
+              el("span", null, `${review.branch} @ ${review.sha.slice(0, 12)}`));
+    card.append(id, el("h3", null, ticket ? ticket.title : review.ticket),
+                el("p", null, review.summary),
+                el("p", "muted", `Reviewed by ${review.reviewer}; authored by ${review.author}`));
+    if (review.comments.length) card.append(listSection("Remaining non-blocking comments", review.comments));
+    else card.append(el("p", "muted", "No remaining review comments."));
+    const note = el("textarea");
+    note.maxLength = 4000;
+    note.dataset.reviewDraft = String(review.id);
+    note.value = mergeDrafts[review.id] || "";
+    note.oninput = () => { mergeDrafts[review.id] = note.value; };
+    note.placeholder = "Optional approval note, or comments to send back";
+    const approve = el("button", "primary", approvalForReview(review.id) ? "Approved" : "Approve");
+    approve.disabled = Boolean(approvalForReview(review.id));
+    approve.onclick = async () => {
+      if (!confirm(`Approve ${review.ticket} @ ${review.sha.slice(0, 12)}?\n\nThis authorizes the integrator; it does not merge.`)) return;
+      approve.disabled = true;
+      try {
+        const a = await api("/api/approve", { review_id: review.id, sha: review.sha, note: note.value });
+        delete mergeDrafts[review.id];
+        toast(`A-${a.id} recorded; ${state.integrator} was told`); await tick();
+      } catch (e) { toast(e.message); approve.disabled = false; }
+    };
+    const send = el("button", null, "Send with comments");
+    send.onclick = async () => {
+      if (!note.value.trim()) { toast("Write the comments to send back"); return; }
+      send.disabled = true;
+      try {
+        await api("/api/review-feedback", { review_id: review.id, sha: review.sha, body: note.value });
+        delete mergeDrafts[review.id];
+        toast(`Comments sent to ${review.author}; approval withheld`); await tick();
+      } catch (e) { toast(e.message); send.disabled = false; }
+    };
+    const actions = el("div", "row"); actions.append(send, approve);
+    card.append(note, actions); list.append(card);
+  }
+  const restored = [...board.querySelectorAll("[data-review-draft]")].find((input) => input.dataset.reviewDraft === focused);
+  if (restored) { restored.focus(); restored.setSelectionRange(selection[0], selection[1]); }
+}
+function renderWorkspace() {
+  $("showBoard").classList.toggle("on", view === "board");
+  $("showMerge").classList.toggle("on", view === "merge");
+  $("showMerge").textContent = `Merge (${state.merge_queue.length})`;
+  if (view === "merge") renderMergeQueue(); else renderBoard();
+}
+function messageNode(m) {
+  const node = el("div", "msg" + (m.sender === state.user ? " mine" : ""));
+  const from = el("div", "from"); from.append(el("span", null, `${m.sender} → ${m.recipient}`), el("span", null, when(m.created)));
+  node.append(from, el("div", "body", m.body));
+  return node;
+}
+function renderMessages() {
+  const box = $("messages"), atBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 40;
+  const shown = tab === "feed" ? messages : messages.filter((m) => m.sender === state.user || m.recipient === state.user);
+  box.replaceChildren(...shown.slice(-300).map(messageNode));
+  if (!shown.length) box.append(el("p", "muted", tab === "feed" ? "No team messages yet." : "No conversation yet. Messages you send and replies to you appear here."));
+  if (atBottom) box.scrollTop = box.scrollHeight;
+}
+function discussion(ids) {
+  const related = messages.filter((m) => ids.some((id) => m.body.includes(id)));
+  const wrap = el("div"); wrap.append(el("h2", null, `Discussion (${related.length})`));
+  if (!related.length) wrap.append(el("p", "muted", "No messages mention this yet."));
+  wrap.append(...related.slice(-50).map(messageNode));
+  return wrap;
+}
+function openDrawer(nodes) { $("drawer").replaceChildren(...nodes); $("drawerOverlay").classList.add("open"); }
+function listSection(title, items) {
+  const wrap = el("div"); wrap.append(el("h2", null, title));
+  const ul = el("ul"); for (const item of items) ul.append(el("li", null, item)); wrap.append(ul);
+  return wrap;
+}
+function approvalsFor(ticketId) { return state.approvals.filter((a) => a.ticket === ticketId); }
+function approvalLabel(a) {
+  if (a.status === "invalid") return ["fails signature check", "warn"];
+  if (a.status === "revoked") return ["revoked", ""];
+  if (a.merged) return ["merged", ""];
+  const branch = state.branches.find((b) => b.name === a.branch);
+  return branch && branch.sha === a.sha ? ["approved, ready to merge", "ok"] : ["outdated: branch moved", "warn"];
+}
+function approvalSection(t) {
+  const reviews = state.reviews.filter((review) => review.ticket === t.id);
+  if (!reviews.length && !approvalsFor(t.id).length) return el("span");
+  const wrap = el("div", "approval"); wrap.id = "approvalSection";
+  wrap.append(el("h2", null, "Review and merge history"));
+  for (const review of reviews) {
+    wrap.append(el("p", "muted", `R-${review.id} · ${review.branch} @ ${review.sha.slice(0, 7)} · ${review.state}`),
+                el("p", null, review.summary));
+  }
+  for (const a of approvalsFor(t.id)) {
+    const [label, cls] = approvalLabel(a), row = el("div", "arow");
+    row.append(el("span", null, `A-${a.id} · ${a.source} · ${a.branch} @ ${a.sha.slice(0, 7)} · ${when(a.created)}`), el("span", `chip ${cls}`, label));
+    if (a.status === "approved" && !a.merged) {
+      const revoke = el("button", null, "Revoke");
+      revoke.onclick = async () => {
+        try { await api("/api/revoke", { id: a.id }); toast(`A-${a.id} revoked`); await tick(); }
+        catch (e) { toast(e.message); }
+      };
+      row.append(revoke);
+    }
+    wrap.append(row);
+  }
+  return wrap;
+}
+async function openTicket(t) {
+  const chips = el("div", "chips");
+  for (const text of [t.status, t.sprint, ...(t.resources || []), ownerOf(t.id) ? `claimed by ${ownerOf(t.id)}` : "unclaimed"]) chips.append(el("span", "chip", text));
+  const ask = el("button", null, "Ask the team about this");
+  ask.onclick = () => { $("compose").value = `Re ${t.id}: `; closeOverlays(); $("compose").focus(); };
+  const handoff = el("div"); handoff.append(el("h2", null, "Handoff"), el("p", "muted", "Loading..."));
+  openDrawer([el("div", "muted", t.id), el("h3", null, t.title), chips, approvalSection(t),
+              listSection("Acceptance", t.acceptance), listSection("Validation", t.validation),
+              listSection("Paths", t.paths), t.depends_on.length ? listSection("Depends on", t.depends_on) : el("span"),
+              handoff, discussion([t.id]), ask]);
+  try {
+    const data = await api(`/api/handoff?ticket=${encodeURIComponent(t.id)}`);
+    handoff.replaceChildren(el("h2", null, "Handoff"), data.text ? el("pre", "handoff", data.text) : el("p", "muted", "No handoff file yet."));
+  } catch (e) { handoff.replaceChildren(el("h2", null, "Handoff"), el("p", "muted", e.message)); }
+}
+function openFeature(f) {
+  const ask = el("button", null, "Message the integrator");
+  ask.onclick = () => { $("to").value = state.integrator; $("compose").value = `Re FR-${f.id}: `; closeOverlays(); $("compose").focus(); };
+  openDrawer([el("div", "muted", `FR-${f.id} · ${f.status} · from ${f.requester} · ${when(f.created)}`),
+              el("h3", null, f.title), el("pre", "handoff", f.body || "(no details)"), discussion([`FR-${f.id}`]), ask]);
+}
+function closeOverlays() { $("drawerOverlay").classList.remove("open"); $("modalOverlay").classList.remove("open"); }
+
+let lastStateJson = "";
+async function refreshState() {
+  const next = await api("/api/state"), json = JSON.stringify(next);
+  if (json === lastStateJson) return;  // redraw only on change, so polling never swallows a click
+  lastStateJson = json; state = next;
+  $("head").textContent = state.head ? `main @ ${state.head}` : "";
+  renderRecipients(); renderSessions(); renderWorkspace();
+}
+async function refreshMessages() {
+  let more = true, added = 0;
+  while (more) {
+    const page = await api(`/api/messages?after=${lastId}`);
+    messages.push(...page.items); added += page.items.length; lastId = page.next_cursor; more = page.has_more;
+  }
+  if (messages.length > 2000) messages = messages.slice(-2000);
+  if (added || !$("messages").childElementCount) renderMessages();
+}
+async function tick() {
+  try { await refreshState(); await refreshMessages(); $("live").classList.add("live"); }
+  catch (e) { $("live").classList.remove("live"); $("head").textContent = `Not connected: ${e.message}`; }
+}
+async function send() {
+  const body = $("compose").value.trim();
+  if (!body) return;
+  try { await api("/api/send", { to: $("to").value, body }); $("compose").value = ""; tab = "mine"; syncTabs(); await refreshMessages(); }
+  catch (e) { toast(e.message); }
+}
+function syncTabs() { $("tabMine").classList.toggle("on", tab === "mine"); $("tabFeed").classList.toggle("on", tab === "feed"); renderMessages(); }
+
+$("send").onclick = send;
+$("showBoard").onclick = () => { view = "board"; renderWorkspace(); };
+$("showMerge").onclick = () => { view = "merge"; renderWorkspace(); };
+$("compose").addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) send(); });
+$("tabMine").onclick = () => { tab = "mine"; syncTabs(); };
+$("tabFeed").onclick = () => { tab = "feed"; syncTabs(); };
+$("to").onchange = () => renderSessions();
+$("newFeature").onclick = () => { $("modalOverlay").classList.add("open"); $("featureTitle").focus(); };
+$("cancelFeature").onclick = closeOverlays;
+$("drawerOverlay").onclick = (e) => { if (e.target === $("drawerOverlay")) closeOverlays(); };
+$("modalOverlay").onclick = (e) => { if (e.target === $("modalOverlay")) closeOverlays(); };
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeOverlays(); });
+$("submitFeature").onclick = async () => {
+  try {
+    const f = await api("/api/features", { title: $("featureTitle").value, body: $("featureBody").value });
+    $("featureTitle").value = ""; $("featureBody").value = ""; closeOverlays();
+    toast(`FR-${f.id} sent to ${state.integrator}`); await tick();
+  } catch (e) { toast(e.message); }
+};
+tick();
+setInterval(tick, 3000);
+</script>
+</body>
+</html>
