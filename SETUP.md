@@ -1,7 +1,6 @@
 # Running a team on this harness
 
-You do not configure this by hand. You clone the repo, point an agent at the
-folder, and the agent drives the rest through `AGENTS.md` and `hub.py help`.
+Clone the repo, point an agent at the folder, and the agent drives the rest through `AGENTS.md` and `hub.py help`.
 
 ## 1. Clone and check
 
@@ -11,8 +10,6 @@ uv sync --project tools/agent_hub --locked
 python tools/check_repo.py
 python -m unittest discover -s tools/agent_hub/tests
 ```
-
-`check_repo.py` validates the backlog. It should pass before you start.
 
 ## 2. Point an agent at the repo
 
@@ -35,5 +32,5 @@ seat count:
 
 ## Next
 
-`README.md` explains what this system is and its limits. `docs/development.md`
+`README.md` explains some technical details, `docs/development.md`
 covers the full workflow.
