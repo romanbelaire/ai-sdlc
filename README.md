@@ -14,9 +14,8 @@ board, and the team feed](https://github.com/user-attachments/assets/b34df7a6-9a
 
 ## Setup
 
-You do not configure this by hand. You clone the repo, point an agent at the
-folder, and the agent drives the rest through [`AGENTS.md`](AGENTS.md) and
-`hub.py help`.
+Clone the repo, point an agent at the folder, and the agent drives the rest
+through [`AGENTS.md`](AGENTS.md) and `hub.py help`.
 
 **1. Clone and check.**
 
@@ -26,8 +25,6 @@ uv sync --project tools/agent_hub --locked
 python tools/check_repo.py
 python -m unittest discover -s tools/agent_hub/tests
 ```
-
-`check_repo.py` validates the backlog. It should pass before you start.
 
 **2. Point an agent at the repo.** Any of these work:
 
