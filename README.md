@@ -7,6 +7,11 @@ repository: durable work sessions, advisory claims, cursor inboxes, and a
 Standard library only. One SQLite file. No daemon, no broker, no network
 listener. Python 3.11+.
 
+<!-- Hosted on GitHub rather than committed: an image lands in every clone and
+     in history forever. Source issue: /issues/1 -->
+![The local dashboard: session seats with their roles and claims, the ticket
+board, and the team feed](https://github.com/user-attachments/assets/b34df7a6-9a83-4467-8419-3d0d40a17003)
+
 ## Verified Human-in-the-Loop
 
 Most agent harnesses gate a merge on a message, a flag, or a UI click that the
