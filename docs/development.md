@@ -389,6 +389,17 @@ copy of the product.
 The publisher initializes a local git repo and prints the HEAD SHA. It does
 not push. Do not copy `.agent-state/operator.key` into the extract.
 
+Update an already-published clone in place, keeping its history and remote:
+
+```powershell
+python tools/publish_harness.py --sync C:\path	o\clone --commit "Sync from source"
+```
+
+`--sync` owns every tracked file in that clone: anything the build no longer
+produces is deleted, so a withdrawn file cannot keep being served. It refuses
+to run over uncommitted tracked changes, scans the operator's untracked files
+before touching anything, and stages only what it generated.
+
 ## Validation ladder
 
 1. **Every infrastructure PR:** `python tools/check_repo.py` and

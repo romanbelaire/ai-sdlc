@@ -2,3 +2,7 @@
 __pycache__/
 .agent-state/
 *.pyc
+# Local staging for README images. Screenshots are hosted on GitHub and
+# linked by absolute URL, never committed: they land in every clone and
+# in history forever, and no text filter can inspect them.
+/assets/
