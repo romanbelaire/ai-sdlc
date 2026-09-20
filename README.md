@@ -1,4 +1,4 @@
-# rl-agent-hub
+# Team Harness
 
 A local coordination kernel for multiple AI coding agents working one
 repository: durable work sessions, advisory claims, cursor inboxes, and a
